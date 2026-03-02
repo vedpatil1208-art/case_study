@@ -1,0 +1,1 @@
+Doctor ID: 121 | Patient ID: 1212 | Date: 12.09.12 | Symptoms: cough | Diagnosis: fever | Status: under treatment
