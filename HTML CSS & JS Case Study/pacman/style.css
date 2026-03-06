@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+  --C: 24px;
+  --W: calc(21*var(--C));
+  --H: calc(22*var(--C));
+  --yellow: #FFD700;
+  --wall: #1a1aff;
+  --bg: #000010;
+}
+
+* { margin:0; padding:0; box-sizing:border-box }
+
+body {
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Press Start 2P', monospace;
+  gap: 6px;
+}
+
+.title { color: var(--yellow); font-size: 28px; letter-spacing: 4px; }
+
+.hud { display:flex; gap:24px; font-size:9px; color:#ffffff; }
+.hud b { color: var(--yellow); }
+.lf {
+  display:inline-block; width:12px; height:12px;
+  background:var(--yellow); border-radius:50%;
+  clip-path:polygon(50% 50%,100% 15%,100% 0%,0% 0%,0% 100%,100% 100%,100% 85%);
+}
+.lf.gone { opacity:0; }
+
+.arena {
+  position:relative; width:var(--W); height:var(--H);
+  border:3px solid var(--wall); overflow:hidden; background:#000008;
+}
+
+.maze {
+  position:absolute; inset:0;
+  display:grid;
+  grid-template-columns:repeat(21,var(--C));
+  grid-template-rows:repeat(22,var(--C));
+}
+s { background:var(--wall); }
+g { background:rgba(0, 0, 0, 0.3); }
+
+d::after {
+  content:''; display:block;
+  width:5px; height:5px; border-radius:50%;
+  background:#ffffff; margin:auto; margin-top:calc(50% - 2.5px);
+}
+d.eaten::after { display:none; }
+
+p::after {
+  content:''; display:block;
+  width:11px; height:11px; border-radius:50%;
+  background:#fff; box-shadow:0 0 8px #fff;
+  margin:auto; margin-top:calc(50% - 5.5px);
+  animation:pblink .55s ease-in-out infinite alternate;
+}
+p.eaten::after { display:none; }
+@keyframes pblink {
+  from { transform:scale(.75); opacity:.6 }
+  to   { transform:scale(1.15); opacity:1 }
+}
+
+.pac {
+  position:absolute; width:var(--C); height:var(--C);
+  transition:left .12s linear, top .12s linear; z-index:10;
+}
+.pac::after {
+  content:''; display:block;
+  width:calc(var(--C) - 4px); height:calc(var(--C) - 4px);
+  border-radius:50%; background:var(--yellow); margin:2px;
+  clip-path:polygon(50% 50%,100% 15%,100% 0%,0% 0%,0% 100%,100% 100%,100% 85%);
+  animation:chomp .22s linear infinite alternate;
+}
+.pac.r::after { transform:rotate(0deg) }
+.pac.d::after { transform:rotate(90deg) }
+.pac.l::after { transform:rotate(180deg) }
+.pac.u::after { transform:rotate(270deg) }
+@keyframes chomp {
+  from { clip-path:polygon(50% 50%,100% 15%,100% 0%,0% 0%,0% 100%,100% 100%,100% 85%) }
+  to   { clip-path:polygon(50% 50%,100% 49%,100% 0%,0% 0%,0% 100%,100% 100%,100% 51%) }
+}
+
+.ghost {
+  position:absolute; width:var(--C); height:var(--C);
+  transition:left .18s linear, top .18s linear; z-index:9;
+  display:flex; flex-direction:column; align-items:center;
+}
+.ghost::before {
+  content:''; display:block; flex-shrink:0;
+  width:calc(var(--C) - 2px); height:calc(var(--C)*0.7);
+  border-radius:999px 999px 0 0;
+}
+.ghost::after {
+  content:''; display:block; flex-shrink:0;
+  width:calc(var(--C) - 2px); height:7px;
+  background:
+    radial-gradient(circle at 12.5% 0%,var(--bg) 38%,transparent 40%) 0/25% 100%,
+    radial-gradient(circle at 37.5% 0%,var(--bg) 38%,transparent 40%) 0/25% 100%,
+    radial-gradient(circle at 62.5% 0%,var(--bg) 38%,transparent 40%) 0/25% 100%,
+    radial-gradient(circle at 87.5% 0%,var(--bg) 38%,transparent 40%) 0/25% 100%,
+    currentColor;
+}
+.red    { color:#FF0000 } .red::before    { background:#FF0000 }
+.pink   { color:#FFB8FF } .pink::before   { background:#FFB8FF }
+.cyan   { color:#00FFFF } .cyan::before   { background:#00FFFF }
+.orange { color:#FFB852 } .orange::before { background:#FFB852 }
+
+.eyes { position:absolute; top:4px; display:flex; gap:3px; z-index:2; }
+.eyes i { display:block; width:6px; height:7px; background:#fdfcfc; border-radius:50%; position:relative; }
+.eyes i::after {
+  content:''; position:absolute;
+  width:3px; height:3px; border-radius:50%;
+  background:#00c; top:1px; left:1px;
+}
+
+.ghost.fright::before, .ghost.fright::after { background:#0b0b6d !important; color:rgb(0, 0, 255) !important; }
+.ghost.fright .eyes i { background:#e43131 }
+.ghost.fright .eyes i::after { background:red }
+.ghost.fright { animation:scare .35s step-end infinite }
+@keyframes scare { 50% { opacity:.5 } }
+
+.ghost.warn::before, .ghost.warn::after { animation:wflash .2s step-end infinite alternate }
+@keyframes wflash { from { background:#1010d7 !important } to { background:#fff !important } }
+
+.ghost.dead::before, .ghost.dead::after { background:transparent !important; box-shadow:none !important }
+.ghost.dead { animation:none }
+
+.overlay {
+  position:absolute; inset:0; z-index:50;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.78); text-align:center;
+}
+.overlay.off { display:none }
+.ob { display:flex; flex-direction:column; align-items:center; gap:16px }
+#otitle { font-size:20px; color:var(--yellow); animation:pulse 1s ease-in-out infinite alternate; }
+@keyframes pulse { from { opacity:.6 } to { opacity:1 } }
+.osub { font-size:7px; color:#ffffff; line-height:2.2 }
+#obtn {
+  font-family:'Press Start 2P',monospace; font-size:9px;
+  padding:10px 22px; background:var(--yellow); color:#020101;
+  border:none; cursor:pointer; letter-spacing:2px;
+}
+#obtn:hover { opacity:.85 }
+
+@media(max-width:540px) { :root { --C:15px } }

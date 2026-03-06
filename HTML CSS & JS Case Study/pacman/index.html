@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>PAC-MAN</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<div class="crt"></div>
+<h1 class="title">PAC-MAN</h1>
+
+<div class="hud">
+  <span>SCORE&nbsp;<b id="sc">0</b></span>
+  <span>HIGH&nbsp;<b id="hi">0</b></span>
+  <span>LIVES&nbsp;
+    <i class="lf" id="l1"></i>
+    <i class="lf" id="l2"></i>
+    <i class="lf" id="l3"></i>
+  </span>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MAZE  —  W=wall  D=dot  P=pellet  _=empty
+     21 cols × 22 rows, hand-crafted in HTML
+     ════════════════════════════════════════ -->
+<div class="arena" id="arena">
+
+  <div class="maze">
+    <!-- row 0 -->
+    <s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s>
+    <!-- row 1 -->
+    <s></s><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><s></s><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><s></s>
+    <!-- row 2 -->
+    <s></s><p></p><s></s><s></s><d></d><s></s><s></s><s></s><d></d><s></s><s></s><s></s><d></d><s></s><s></s><s></s><d></d><s></s><s></s><p></p><s></s>
+    <!-- row 3 -->
+    <s></s><d></d><s></s><s></s><d></d><s></s><s></s><s></s><d></d><s></s><s></s><s></s><d></d><s></s><s></s><s></s><d></d><s></s><s></s><d></d><s></s>
+    <!-- row 4 -->
+    <s></s><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><s></s>
+    <!-- row 5 -->
+    <s></s><d></d><s></s><s></s><d></d><s></s><d></d><s></s><s></s><s></s><s></s><s></s><s></s><s></s><d></d><s></s><d></d><s></s><s></s><d></d><s></s>
+    <!-- row 6 -->
+    <s></s><d></d><d></d><d></d><d></d><s></s><d></d><d></d><d></d><d></d><s></s><d></d><d></d><d></d><d></d><s></s><d></d><d></d><d></d><d></d><s></s>
+    <!-- row 7 -->
+    <s></s><s></s><s></s><s></s><d></d><s></s><s></s><s></s><e></e><s></s><s></s><s></s><e></e><s></s><s></s><s></s><d></d><s></s><s></s><s></s><s></s>
+    <!-- row 8 -->
+    <e></e><e></e><e></e><s></s><d></d><s></s><e></e><e></e><e></e><e></e><e></e><e></e><e></e><e></e><e></e><s></s><d></d><s></s><e></e><e></e><e></e>
+    <!-- row 9 -->
+    <s></s><s></s><s></s><s></s><d></d><s></s><e></e><s></s><g></g><g></g><g></g><g></g><g></g><s></s><e></e><s></s><d></d><s></s><s></s><s></s><s></s>
+    <!-- row 10 -->
+    <e></e><e></e><e></e><e></e><d></d><e></e><e></e><s></s><g></g><g></g><g></g><g></g><g></g><s></s><e></e><e></e><d></d><e></e><e></e><e></e><e></e>
+    <!-- row 11 -->
+    <s></s><s></s><s></s><s></s><d></d><s></s><e></e><s></s><s></s><s></s><s></s><s></s><s></s><s></s><e></e><s></s><d></d><s></s><s></s><s></s><s></s>
+    <!-- row 12 -->
+    <e></e><e></e><e></e><s></s><d></d><s></s><e></e><e></e><e></e><e></e><e></e><e></e><e></e><e></e><e></e><s></s><d></d><s></s><e></e><e></e><e></e>
+    <!-- row 13 -->
+    <s></s><s></s><s></s><s></s><d></d><s></s><e></e><s></s><s></s><s></s><s></s><s></s><s></s><s></s><e></e><s></s><d></d><s></s><s></s><s></s><s></s>
+    <!-- row 14 -->
+    <s></s><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><s></s><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><s></s>
+    <!-- row 15 -->
+    <s></s><d></d><s></s><s></s><d></d><s></s><s></s><s></s><d></d><s></s><s></s><s></s><d></d><s></s><s></s><s></s><d></d><s></s><s></s><d></d><s></s>
+    <!-- row 16 -->
+    <s></s><p></p><d></d><s></s><d></d><d></d><d></d><d></d><d></d><d></d><e></e><d></d><d></d><d></d><d></d><d></d><d></d><s></s><d></d><p></p><s></s>
+    <!-- row 17 -->
+    <s></s><s></s><d></d><s></s><d></d><s></s><d></d><s></s><s></s><s></s><s></s><s></s><s></s><s></s><d></d><s></s><d></d><s></s><d></d><s></s><s></s>
+    <!-- row 18 -->
+    <s></s><d></d><d></d><d></d><d></d><s></s><d></d><d></d><d></d><d></d><s></s><d></d><d></d><d></d><d></d><s></s><d></d><d></d><d></d><d></d><s></s>
+    <!-- row 19 -->
+    <s></s><d></d><s></s><s></s><s></s><s></s><s></s><s></s><d></d><s></s><s></s><s></s><d></d><s></s><s></s><s></s><s></s><s></s><s></s><d></d><s></s>
+    <!-- row 20 -->
+    <s></s><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><d></d><s></s>
+    <!-- row 21 -->
+    <s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s>
+  </div>
+
+  <!-- Pac-Man -->
+  <div class="pac" id="pac"></div>
+
+  <!-- Ghosts — colour set by CSS class, position by JS inline style -->
+  <div class="ghost red"    id="g0"><span class="eyes"><i></i><i></i></span></div>
+  <div class="ghost pink"   id="g1"><span class="eyes"><i></i><i></i></span></div>
+  <div class="ghost cyan"   id="g2"><span class="eyes"><i></i><i></i></span></div>
+  <div class="ghost orange" id="g3"><span class="eyes"><i></i><i></i></span></div>
+
+  <!-- Overlay screen -->
+  <div class="overlay" id="ov">
+    <div class="ob">
+      <p id="otitle">PAC-MAN</p>
+      <p id="osub" class="osub">ARROW KEYS · EAT ALL DOTS<br>AVOID GHOSTS!</p>
+      <button id="obtn">INSERT COIN</button>
+    </div>
+  </div>
+
+</div><!-- /arena -->
+
+<script src="game.js"></script>
+</body>
+</html>
