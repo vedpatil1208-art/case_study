@@ -30,8 +30,6 @@ public:
     Doctor(int id, string name, string specialization)
         : Person(id, name), specialization(specialization) {}
 
-    string getSpecialization() const { return specialization; }
-
     void display() const override {
         cout << "Doctor ID: " << id
              << " | Name: " << name
@@ -74,8 +72,9 @@ public:
 
     void saveToFile() {
         ofstream file("records.txt", ios::app);
+
         if (!file)
-            throw runtime_error("File error!");
+            throw runtime_error("Error opening records.txt");
 
         file << "Doctor ID: " << doctorId
              << " | Patient ID: " << patientId
@@ -84,21 +83,6 @@ public:
              << " | Diagnosis: " << diagnosis
              << " | Status: " << status << endl;
 
-        file.close();
-    }
-
-    static void viewAppointments() {
-        ifstream file("records.txt");
-        if (!file) {
-            cout << "No records found.\n";
-            return;
-        }
-
-        cout << "\n--- Consultation Records ---\n";
-        string line;
-        while (getline(file, line)) {
-            cout << line << endl;
-        }
         file.close();
     }
 };
@@ -123,22 +107,33 @@ int main() {
 
     vector<Doctor> doctors;
     vector<Patient> patients;
+
     int choice;
 
+    // INFORMATION MESSAGE
+    cout << "-----------------------------------------------------\n";
+    cout << "        TELEMEDICINE BACKEND SYSTEM\n";
+    cout << "-----------------------------------------------------\n";
+    cout << "All consultation data is stored permanently in\n";
+    cout << "records.txt using C++ file handling.\n";
+    cout << "-----------------------------------------------------\n";
+
     do {
-        cout << "\n===== Telemedicine Backend System =====\n";
+
+        cout << "\nMenu:\n";
         cout << "1. Register Doctor\n";
         cout << "2. Register Patient\n";
         cout << "3. Schedule Consultation\n";
-        cout << "4. View Consultation Records\n";
-        cout << "5. Exit\n";
+        cout << "4. Exit\n";
         cout << "Enter choice: ";
+
         cin >> choice;
 
         try {
 
             // REGISTER DOCTOR
             if (choice == 1) {
+
                 int id;
                 string name, specialization;
 
@@ -150,15 +145,18 @@ int main() {
 
                 cout << "Enter Name: ";
                 cin >> name;
+
                 cout << "Enter Specialization: ";
                 cin >> specialization;
 
                 doctors.push_back(Doctor(id, name, specialization));
+
                 cout << "Doctor Registered Successfully!\n";
             }
 
             // REGISTER PATIENT
             else if (choice == 2) {
+
                 int id, age;
                 string name;
 
@@ -170,32 +168,37 @@ int main() {
 
                 cout << "Enter Name: ";
                 cin >> name;
+
                 cout << "Enter Age: ";
                 cin >> age;
 
                 patients.push_back(Patient(id, name, age));
+
                 cout << "Patient Registered Successfully!\n";
             }
 
             // SCHEDULE CONSULTATION
             else if (choice == 3) {
+
                 int dId, pId;
                 string date, symptoms, diagnosis, status;
 
                 cout << "Enter Doctor ID: ";
                 cin >> dId;
+
                 if (!doctorExists(doctors, dId))
                     throw invalid_argument("Doctor ID not found!");
 
                 cout << "Enter Patient ID: ";
                 cin >> pId;
+
                 if (!patientExists(patients, pId))
                     throw invalid_argument("Patient ID not found!");
 
                 cout << "Enter Date: ";
                 cin >> date;
 
-                cin.ignore(); // clear buffer
+                cin.ignore();
 
                 cout << "Enter Symptoms: ";
                 getline(cin, symptoms);
@@ -207,29 +210,25 @@ int main() {
                 getline(cin, status);
 
                 Appointment app(dId, pId, date, symptoms, diagnosis, status);
+
                 app.saveToFile();
 
-                cout << "Consultation Saved Successfully!\n";
+                cout << "Consultation saved successfully in records.txt!\n";
             }
-
-            // VIEW RECORDS
             else if (choice == 4) {
-                Appointment::viewAppointments();
-            }
 
-            else if (choice == 5) {
                 cout << "Exiting System...\n";
             }
-
             else {
+
                 throw invalid_argument("Invalid choice!");
             }
+        }
+        catch (exception &e) {
 
-        } catch (exception &e) {
             cout << "Error: " << e.what() << endl;
         }
-
-    } while (choice != 5);
+    } while (choice != 4);
 
     return 0;
 }
