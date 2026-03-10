@@ -62,10 +62,10 @@ Telemedicine Backend System Usi…
 
 ## Project Structure
 telemedicine-system
-│
-├── main.cpp
-├── records.txt
-└── README.md
+
+main.cpp
+records.txt
+README.md
 ## How to Run
 
 Download or clone the repository
