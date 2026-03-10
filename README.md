@@ -1,17 +1,16 @@
 # Case Study Projects
 
-This repository contains two academic case study projects.
+Author: Ved Patil
+Course: B.Tech CSE
 
-## Projects
-1. **Telemedicine Backend System (C++)**
-2. **Pacman Game (HTML, CSS, JavaScript)**
+Projects included:
 
-## Documentation
-The Documentation folder contains:
-- Final Project Report (PDF)
-- Final Presentation (PPT)
+1. Telemedicine Backend System using C++
+   - OOP concepts
+   - File handling
+   - Exception handling
 
-## Author
-Ved Patil  
-B.Tech CSE  
-ITM Skills University
+2. Pacman Game using HTML CSS and JavaScript
+   - Grid based maze
+   - Ghost movement
+   - Collision detection
