@@ -40,7 +40,7 @@ A browser-based Pacman game created using web technologies.
 
 * HTML
 * CSS
-* JavaScript## Purpose
+* JavaScript
 
 #Purpose
 
