@@ -42,7 +42,7 @@ A browser-based Pacman game created using web technologies.
 * CSS
 * JavaScript
 
-#Purpose
+## Purpose
 
 These projects demonstrate the practical application of programming concepts using C++ and web technologies such as HTML, CSS, and JavaScript.
 
