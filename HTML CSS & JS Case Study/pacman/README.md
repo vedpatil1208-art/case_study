@@ -49,11 +49,15 @@ DOM manipulation
 
 ## Project Structure
 pacman-game
-│
-├── index.html
-├── style.css
-└── script.js
-▶️ How to Run
+
+index.html
+    |
+style.css
+    |
+script.js
+
+ 
+## How to Run
 
 Download or clone the repository
 
@@ -77,3 +81,4 @@ High score saving
 
 Ved Patil
 B.Tech CSE
+
