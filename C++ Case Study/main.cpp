@@ -87,7 +87,7 @@ public:
     }
 };
 
-// ================= HELPER FUNCTIONS =================
+//  HELPER FUNCTIONS
 bool doctorExists(const vector<Doctor>& doctors, int id) {
     for (const auto& d : doctors)
         if (d.getId() == id)
@@ -102,7 +102,7 @@ bool patientExists(const vector<Patient>& patients, int id) {
     return false;
 }
 
-// ================= MAIN FUNCTION =================
+//  MAIN FUNCTION
 int main() {
 
     vector<Doctor> doctors;

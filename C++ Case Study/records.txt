@@ -1,2 +1,1 @@
-Doctor ID: 121 | Patient ID: 1212 | Date: 12.09.12 | Symptoms: cough | Diagnosis: fever | Status: under treatment
-Doctor ID: 1212 | Patient ID: 1111 | Date: 2.3.2009 | Symptoms: cold | Diagnosis: cold | Status: under treatment
+Doctor ID: 2 | Patient ID: 12 | Date: dfdfdf | Symptoms: fdfd | Diagnosis: dfdf | Status: under streatment
