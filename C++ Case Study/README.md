@@ -1,43 +1,99 @@
-# Telemedicine Backend System (C++)
+## Telemedicine Backend System (C++)
 
-Author: Ved Patil
-Course: B.Tech CSE
+A menu-driven Telemedicine Backend System developed using C++ that simulates how healthcare platforms manage doctors, patients, and consultations.
+
+The system demonstrates how Object-Oriented Programming (OOP) concepts and file handling can be used to organize and store healthcare data. 
+
+Telemedicine Backend System Usi…
 
 ## Project Description
 
-This project is a simple Telemedicine Backend System developed using C++.
-It simulates how a healthcare system can manage doctors, patients, and consultations.
+This project allows users to register doctors and patients, schedule consultations, and store medical records.
 
-The program is menu-driven and runs in the command line.
+The system runs in the command line and stores consultation data in a text file so records remain saved even after the program exits. 
 
 ## Features
 
-* Register doctors
-* Register patients
-* Schedule consultations
-* Store consultation records in a file
-* Prevent duplicate IDs using validation
+Register doctors with specialization
+
+Register patients with age and personal details
+
+Schedule consultations between doctors and patients
+
+Store consultation records in a file
+
+Prevent duplicate IDs
+
+Exception handling for invalid operations
+
+## Technologies Used
+
+C++
+
+Standard Template Library (STL)
+
+Libraries Used
+
+iostream – Input and output operations
+
+vector – Dynamic data storage
+
+fstream – File handling
+
+stdexcept – Exception handling
 
 ## Concepts Used
 
-* Object-Oriented Programming (OOP)
-* Classes and Inheritance
-* Polymorphism
-* Vectors for data storage
-* File handling
-* Exception handling
+This project demonstrates important C++ programming concepts:
 
-## How the System Works
+Object-Oriented Programming (OOP)
 
-1. Register doctor with ID, name, and specialization
-2. Register patient with ID, name, and age
-3. Schedule consultation between doctor and patient
-4. Store consultation details in `records.txt`
+Classes and Inheritance
 
-## Technology Used
+Polymorphism
 
-Programming Language: **C++**
+Vectors for dynamic storage
 
-## Purpose
+File handling for permanent records
 
-This project demonstrates how basic C++ concepts can be used to build a simple backend system for managing telemedicine consultations.
+Exception handling for error management 
+
+Telemedicine Backend System Usi…
+
+## Project Structure
+telemedicine-system
+│
+├── main.cpp
+├── records.txt
+└── README.md
+## How to Run
+
+Download or clone the repository
+
+Open the project folder
+
+Compile the program
+
+Example:
+
+g++ main.cpp -o telemedicine
+./telemedicine
+
+## Future Improvements
+
+Add a Graphical User Interface (GUI)
+
+Integrate a database (MySQL / SQLite)
+
+Add record search and viewing feature
+
+Implement user authentication
+
+Improve appointment scheduling system 
+
+Telemedicine Backend System Usi…
+
+## Author
+
+Ved Patil
+B.Tech CSE
