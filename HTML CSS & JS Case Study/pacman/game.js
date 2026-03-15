@@ -1,323 +1,426 @@
-// ===== REFERENCES =====
-
-// Size of each grid cell
-const C=24,COLS=21,ROWS=22;
-
-// Pac-Man element
-const pacEl=document.getElementById("pac");
-
-// Overlay screen (game over / win screen)
-const ov=document.getElementById("ov");
-
-// All maze cells
-const cells=[...document.querySelectorAll(".maze > *")];
-
-// Ghost elements
-const gEls=[0,1,2,3].map(i=>document.getElementById("g"+i));
-
-// Score display
-const scoreEl=document.getElementById("sc");
-
-// High score display
-const hiEl=document.getElementById("hi");
+// ── BASIC REFERENCES ──
+const C=24,COLS=21,ROWS=22; // cell size and maze grid
+const pacEl=document.getElementById('pac');
+const ov=document.getElementById('ov');
+const cells=[...document.querySelectorAll('.maze > *')];
+const gEls=[0,1,2,3].map(i=>document.getElementById('g'+i));
 
 
-// ===== MAZE DATA =====
+// ── MAZE DATA ──
+const TAG=cells.map(c=>c.tagName.toLowerCase()); // type of each maze cell
+const live=cells.map(_=>true); // whether a dot/pellet still exists
 
-// Store the type of each maze cell (wall, dot, power pellet)
-const TAG=cells.map(c=>c.tagName.toLowerCase());
 
-// Track whether a dot/pellet is still present
-const live=cells.map(()=>true);
+// Convert grid position to array index
+function ci(x,y){return((y+ROWS)%ROWS)*COLS+((x+COLS)%COLS)}
 
-// Convert x,y coordinates into cell index
-function ci(x,y){
- return ((y+ROWS)%ROWS)*COLS+((x+COLS)%COLS);
-}
+// Check wall
+function isWall(x,y){return TAG[ci(x,y)]==='s'}
 
-// Check if a cell is a wall
-function isWall(x,y){
- return TAG[ci(x,y)]==="s";
-}
+// Pacman movement check
+function pacOk(x,y,dx,dy){return !isWall(x+dx,y+dy)}
 
-// Check if Pac-Man can move in a direction
-function pacOk(x,y,dx,dy){
- return !isWall(x+dx,y+dy);
-}
-
-// Check if ghost can move in a direction
-function ghostOk(x,y,dx,dy){
- const t=TAG[ci(x+dx,y+dy)];
- return t!=="s";
+// Ghost movement check
+function ghostOk(x,y,dx,dy,inHouse){
+  const t=TAG[ci(x+dx,y+dy)];
+  return t!=='s'&&(inHouse||t!=='g');
 }
 
 
-// ===== DOT COUNTER =====
+// ── AUDIO ENGINE ──
+let actx=null;
 
-// Count total dots and power pellets
-let totalDots=TAG.filter(t=>t==="d"||t==="p").length;
+function getCtx(){
+  if(!actx) actx=new(window.AudioContext||window.webkitAudioContext)();
+  return actx;
+}
+
+// Small sound generator
+function beep(freq,type,dur,vol=0.18,startTime=null){
+  const ctx=getCtx();
+  const t=startTime||ctx.currentTime;
+
+  const o=ctx.createOscillator();
+  const g=ctx.createGain();
+
+  o.connect(g); g.connect(ctx.destination);
+  o.type=type;
+  o.frequency.setValueAtTime(freq,t);
+
+  g.gain.setValueAtTime(vol,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+
+  o.start(t);
+  o.stop(t+dur+0.01);
+}
 
 
-// ===== GAME STATE =====
+// Dot eating sound
+let chompPhase=0;
+function playChomp(){
+  const ctx=getCtx();
+  const freqs=[[220,180],[180,220]];
+  const [f1,f2]=freqs[chompPhase%2]; chompPhase++;
 
-// Score, high score, and lives
+  const t=ctx.currentTime;
+  beep(f1,'square',0.04,0.12,t);
+  beep(f2,'square',0.04,0.08,t+0.04);
+}
+
+
+// Power pellet sound
+function playPellet(){
+  const ctx=getCtx();
+  const t=ctx.currentTime;
+  [300,400,550,700].forEach((f,i)=>beep(f,'sine',0.1,0.2,t+i*0.07));
+}
+
+
+// Ghost eaten sound
+function playEatGhost(){
+  const ctx=getCtx();
+  const t=ctx.currentTime;
+  [800,600,400,200].forEach((f,i)=>beep(f,'square',0.08,0.25,t+i*0.06));
+}
+
+
+// Death sound
+function playDeath(){
+  const ctx=getCtx();
+  const o=ctx.createOscillator();
+  const g=ctx.createGain();
+
+  o.connect(g); g.connect(ctx.destination);
+  o.type='sawtooth';
+
+  const t=ctx.currentTime;
+
+  o.frequency.setValueAtTime(600,t);
+  o.frequency.exponentialRampToValueAtTime(40,t+1.2);
+
+  g.gain.setValueAtTime(0.3,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+1.2);
+
+  o.start(t); o.stop(t+1.3);
+}
+
+
+// Win sound
+function playWin(){
+  const ctx=getCtx();
+  const t=ctx.currentTime;
+  [523,659,784,1047,784,1047].forEach((f,i)=>beep(f,'square',0.18,0.2,t+i*0.16));
+}
+
+
+// Start sound
+function playStart(){
+  const ctx=getCtx();
+  const t=ctx.currentTime;
+  [[523,0],[659,0.18],[784,0.36],[523,0.54],[659,0.72],[880,0.9],[784,1.08]]
+  .forEach(([f,dt])=>beep(f,'square',0.15,0.2,t+dt));
+}
+
+
+// ── GAME STATE ──
 let score=0,hi=0,lives=3;
-
-// Game running state
-let running=false,raf;
-
-// Pac-Man position
-let px=10,py=16;
-
-// Current movement direction
-let dx=0,dy=0;
-
-// Next movement direction (from keyboard input)
-let nx=0,ny=0;
+let running=false,fright=0,raf;
+let px=10,py=16,dx=0,dy=0,nx=0,ny=0;
 
 
-// ===== GHOST SETUP =====
-
-// Initial positions of ghosts
+// Ghost starting positions
 const GSTART=[
- {x:8,y:9},
- {x:9,y:9},
- {x:10,y:9},
- {x:11,y:9}
+  {x:8,y:9},{x:9,y:9},{x:10,y:9},{x:11,y:9}
 ];
 
 let GS;
 
-// Create ghost objects with starting positions and directions
+
+// Create ghost objects
 function makeGhosts(){
- return GSTART.map((s,i)=>({
-  x:s.x,
-  y:s.y,
-  dx:i%2===0?1:-1,
-  dy:0
- }));
+  return GSTART.map((s,i)=>({
+    x:10,y:8,
+    dx:i%2===0?1:-1,dy:0,
+    out:true,outT:i*900,
+    active:i===0,
+    dead:false,fright:false,
+    home:{x:s.x,y:s.y}
+  }));
 }
 
 
-// ===== DRAW =====
-
-// Update all visual positions in the game
+// ── RENDER GAME ──
 function draw(){
 
- // Move Pac-Man on screen
- pacEl.style.left=px*C+"px";
- pacEl.style.top=py*C+"px";
+  pacEl.style.left=px*C+'px';
+  pacEl.style.top=py*C+'px';
 
- // Change Pac-Man direction animation
- pacEl.className="pac "+(dx===1?"r":dx===-1?"l":dy===1?"d":dy===-1?"u":"r");
+  pacEl.className='pac '+(
+    dx===1?'r':dx===-1?'l':dy===1?'d':dy===-1?'u':'r'
+  );
 
- // Move ghosts on screen
- GS.forEach((g,i)=>{
-  gEls[i].style.left=g.x*C+"px";
-  gEls[i].style.top=g.y*C+"px";
- });
+  GS.forEach((g,i)=>{
+    if(!g.active){gEls[i].style.display='none';return;}
 
- // Update score display
- scoreEl.textContent=score;
- hiEl.textContent=hi;
+    gEls[i].style.display='';
+    gEls[i].style.left=g.x*C+'px';
+    gEls[i].style.top=g.y*C+'px';
+
+    gEls[i].className='ghost '+['red','pink','cyan','orange'][i]
+      +(fright>0&&!g.dead?' fright'+(fright<2000?' warn':''):'')
+      +(g.dead?' dead':'');
+  });
+
+  document.getElementById('sc').textContent=score;
+  document.getElementById('hi').textContent=hi;
+
+  ['l1','l2','l3'].forEach((id,i)=>
+    document.getElementById(id).classList.toggle('gone',i>=lives)
+  );
 }
 
 
-// ===== LOOP =====
+// ── GAME LOOP ──
+let lt=0,pt=0,gt=[0,0,0,0],releaseT=0;
 
-// Game timing variables
-let last=0;
-let pacTimer=0;
-let ghostTimer=0;
-
-// Main game loop
 function loop(ts){
+  if(!running)return;
 
- if(!running)return;
+  const dt=Math.min(ts-lt,100);
+  lt=ts;
 
- const dt=ts-last;
- last=ts;
+  if(fright>0)fright-=dt;
 
- pacTimer+=dt;
- ghostTimer+=dt;
+  // release ghosts slowly
+  releaseT+=dt;
+  GS.forEach((g,i)=>{
+    if(!g.active&&releaseT>i*2200){g.active=true;}
+  });
 
- // ===== PACMAN MOVE =====
- if(pacTimer>150){
+  // pacman movement
+  pt+=dt;
 
-  pacTimer=0;
+  if(pt>150){
+    pt-=150;
 
-  // Change direction if possible
-  if(pacOk(px,py,nx,ny)){
-   dx=nx;dy=ny;
+    if(pacOk(px,py,nx,ny)){dx=nx;dy=ny;}
+
+    if(pacOk(px,py,dx,dy)){
+      px=(px+dx+COLS)%COLS;
+      py=(py+dy+ROWS)%ROWS;
+      playChomp();
+    }
+
+    // eating dots or pellets
+    const idx=ci(px,py),t=TAG[idx];
+
+    if((t==='d'||t==='p')&&live[idx]){
+      live[idx]=false;
+      cells[idx].classList.add('eaten');
+
+      score+=(t==='p'?50:10);
+      if(score>hi)hi=score;
+
+      if(t==='p'){
+        fright=7000;
+        GS.forEach(g=>{g.fright=true;});
+        playPellet();
+      }
+
+      if(live.filter((_,i)=>(TAG[i]==='d'||TAG[i]==='p')&&_).length===0)
+        end('YOU WIN 🎉');
+    }
   }
 
-  // Move Pac-Man if path is clear
-  if(pacOk(px,py,dx,dy)){
-   px=(px+dx+COLS)%COLS;
-   py=(py+dy+ROWS)%ROWS;
-  }
+  // ghost movement
+  GS.forEach((g,i)=>{
 
-  const idx=ci(px,py);
-  const t=TAG[idx];
+    if(!g.active)return;
 
-  // Eat dot or power pellet
-  if((t==="d"||t==="p")&&live[idx]){
+    gt[i]+=dt;
+    const spd=g.dead?100:fright>0?280:200;
 
-   live[idx]=false;
-   cells[idx].classList.add("eaten");
+    if(gt[i]<spd)return;
+    gt[i]-=spd;
 
-   // Add score
-   score+=(t==="p"?50:10);
-   if(score>hi)hi=score;
+    if(g.dead&&g.x===g.home.x&&g.y===g.home.y){
+      g.dead=false;
+      g.fright=false;
+      return;
+    }
 
-   // Reduce remaining dots
-   totalDots--;
+    const inHouse=TAG[ci(g.x,g.y)]==='g';
 
-   // Win condition
-   if(totalDots===0){
-    end("YOU WIN 🎉");
-   }
-  }
- }
+    const dirs=[
+      {x:1,y:0},{x:-1,y:0},
+      {x:0,y:1},{x:0,y:-1}
+    ];
 
- // ===== GHOST MOVE =====
- if(ghostTimer>200){
+    const valid=dirs.filter(d=>{
+      if(!g.dead&&d.x===-g.dx&&d.y===-g.dy)return false;
+      return ghostOk(g.x,g.y,d.x,d.y,inHouse);
+    });
 
-  ghostTimer=0;
+    if(!valid.length)return;
+
+    const tx=g.dead?g.home.x:px;
+    const ty=g.dead?g.home.y:py;
+
+    const pick=fright>0&&!g.dead
+      ?valid[Math.random()*valid.length|0]
+      :valid.reduce((a,b)=>
+        Math.hypot(g.x+b.x-tx,g.y+b.y-ty)
+        <Math.hypot(g.x+a.x-tx,g.y+a.y-ty)?b:a);
+
+    g.dx=pick.x;
+    g.dy=pick.y;
+
+    g.x=(g.x+pick.x+COLS)%COLS;
+    g.y=(g.y+pick.y+ROWS)%ROWS;
+
+    if(g.active&&!g.dead&&g.x===px&&g.y===py)hit(g);
+  });
 
   GS.forEach(g=>{
-
-   // Possible movement directions
-   const dirs=[
-    {x:1,y:0},
-    {x:-1,y:0},
-    {x:0,y:1},
-    {x:0,y:-1}
-   ];
-
-   // Filter valid directions
-   const valid=dirs.filter(d=>{
-    if(d.x===-g.dx && d.y===-g.dy)return false;
-    return ghostOk(g.x,g.y,d.x,d.y);
-   });
-
-   if(!valid.length)return;
-
-   // Choose direction closest to Pac-Man
-   const pick=valid.reduce((best,dir)=>{
-    const d1=Math.hypot(g.x+dir.x-px,g.y+dir.y-py);
-    const d2=Math.hypot(g.x+best.x-px,g.y+best.y-py);
-    return d1<d2?dir:best;
-   });
-
-   g.dx=pick.x;
-   g.dy=pick.y;
-
-   // Move ghost
-   g.x=(g.x+pick.x+COLS)%COLS;
-   g.y=(g.y+pick.y+ROWS)%ROWS;
-
-   // Collision detection
-   if(g.x===px && g.y===py){
-    end("GAME OVER");
-   }
-
+    if(g.active&&!g.dead&&g.x===px&&g.y===py)hit(g);
   });
- }
 
- draw();
-
- // Continue animation
- raf=requestAnimationFrame(loop);
+  draw();
+  raf=requestAnimationFrame(loop);
 }
 
 
-// ===== END GAME =====
+// ── PACMAN COLLISION ──
+function hit(g){
 
-// Stop the game and show result
+  if(fright>0&&!g.dead){
+
+    g.dead=true;
+    g.fright=false;
+
+    score+=200;
+    if(score>hi)hi=score;
+
+    playEatGhost();
+
+  }else{
+
+    running=false;
+    cancelAnimationFrame(raf);
+
+    lives--;
+    playDeath();
+
+    if(lives<=0){
+      setTimeout(()=>end('GAME OVER'),1300);
+    }else{
+      setTimeout(()=>{
+        reset();
+        running=true;
+        lt=performance.now();
+        raf=requestAnimationFrame(loop);
+      },1400);
+    }
+  }
+}
+
+
+// Reset positions
+function reset(){
+  px=10;py=16;
+  dx=0;dy=0;
+  nx=0;ny=0;
+
+  GS=makeGhosts();
+
+  fright=0;
+  pt=0;
+  gt.fill(0);
+  releaseT=0;
+}
+
+
+// Game over / win screen
 function end(msg){
 
- running=false;
- cancelAnimationFrame(raf);
+  running=false;
+  cancelAnimationFrame(raf);
 
- document.getElementById("otitle").textContent=msg;
+  if(msg.includes('WIN'))playWin();
 
- document.getElementById("osub").innerHTML=
- "SCORE: "+score+"<br>HIGH: "+hi;
+  document.getElementById('otitle').textContent=msg;
+  document.getElementById('osub').innerHTML='SCORE: '+score+'<br>HIGH: '+hi;
 
- document.getElementById("obtn").textContent="PLAY AGAIN";
+  document.getElementById('obtn').textContent='PLAY AGAIN';
 
- ov.classList.remove("off");
+  ov.classList.remove('off');
 }
 
 
-// ===== RESET =====
-
-// Reset game state for restart
-function reset(){
-
- px=10;py=16;
- dx=0;dy=0;
- nx=0;ny=0;
-
- score=0;
-
- GS=makeGhosts();
-
- // Recount dots
- totalDots=TAG.filter(t=>t==="d"||t==="p").length;
-
- // Restore dots visually
- cells.forEach((c,i)=>{
-  if(TAG[i]==="d"||TAG[i]==="p"){
-   live[i]=true;
-   c.classList.remove("eaten");
-  }
- });
-
-}
-
-
-// ===== START =====
-
-// Start the game
+// Start game
 function start(){
 
- reset();
+  cells.forEach((c,i)=>{
+    if(TAG[i]==='d'||TAG[i]==='p'){
+      live[i]=true;
+      c.classList.remove('eaten');
+    }
+  });
 
- running=true;
+  score=0;
+  lives=3;
+  running=true;
 
- ov.classList.add("off");
+  GS=makeGhosts();
 
- last=performance.now();
+  fright=0;
+  pt=0;
+  gt.fill(0);
+  releaseT=0;
 
- raf=requestAnimationFrame(loop);
+  ov.classList.add('off');
+
+  lt=performance.now();
+  playStart();
+
+  raf=requestAnimationFrame(loop);
 }
 
 
-// ===== INPUT =====
-
-// Arrow key controls
+// ── INPUT CONTROLS ──
 const KEYS={
- ArrowRight:[1,0],
- ArrowLeft:[-1,0],
- ArrowDown:[0,1],
- ArrowUp:[0,-1]
+  ArrowRight:[1,0],
+  ArrowLeft:[-1,0],
+  ArrowDown:[0,1],
+  ArrowUp:[0,-1]
 };
 
-// Detect keyboard input
-document.addEventListener("keydown",e=>{
- if(KEYS[e.key]){
-  e.preventDefault();
-  [nx,ny]=KEYS[e.key];
- }
+document.addEventListener('keydown',e=>{
+  if(KEYS[e.key]){
+    e.preventDefault();
+    [nx,ny]=KEYS[e.key];
+  }
 });
 
-// Play again button
-document.getElementById("obtn").onclick=start;
+let tx0,ty0;
 
-// Initialize ghosts
-GS=makeGhosts();
+document.addEventListener('touchstart',e=>{
+  tx0=e.touches[0].clientX;
+  ty0=e.touches[0].clientY;
+},{passive:true});
 
-// Draw initial state
+document.addEventListener('touchend',e=>{
+  const ddx=e.changedTouches[0].clientX-tx0;
+  const ddy=e.changedTouches[0].clientY-ty0;
+
+  if(Math.abs(ddx)<10&&Math.abs(ddy)<10)return;
+
+  Math.abs(ddx)>Math.abs(ddy)
+    ?[nx,ny]=[ddx>0?1:-1,0]
+    :[nx,ny]=[0,ddy>0?1:-1];
+
+},{passive:true});
+
+document.getElementById('obtn').onclick=start;
+
 draw();
