@@ -1,4 +1,4 @@
-```javascript
+
 // ===== REFERENCES =====
 const C=24,COLS=21,ROWS=22;
 
@@ -242,4 +242,4 @@ document.getElementById("obtn").onclick=start;
 
 GS=makeGhosts();
 draw();
-```
+
